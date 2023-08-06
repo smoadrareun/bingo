@@ -48,7 +48,7 @@ https://bing.github1s.tk
  - [x] 支持语音输入(支持语音指令，目前仅支持 PC 版 Edge 及 Chrome 浏览器)
  - [x] 支持语音输出(需要手动开启)
  - [x] 支持图片输入
- - [ ] 支持绑定 CloudFlare
+ - [x] 支持自定义域名
  - [ ] 适配深色模式
  - [ ] 支持内置提示词
  - [ ] 支持离线访问
@@ -59,18 +59,32 @@ https://bing.github1s.tk
 
 ### 部署到 Huggingface
 1. 点击此图标
-[![Deploy to HuggingFace](https://img.shields.io/badge/%E7%82%B9%E5%87%BB%E9%83%A8%E7%BD%B2-%F0%9F%A4%97-fff)](https://huggingface.co/login?next=%2Fspaces%2Fhf4all%2Fbingo%3Fduplicate%3Dtrue%26visibility%3Dpublic)
+[![Deploy to HuggingFace](https://img.shields.io/badge/%E7%82%B9%E5%87%BB%E9%83%A8%E7%BD%B2-%F0%9F%A4%97-fff)](https://huggingface.co/login?next=%2Fspaces%2Fhf4all%2Fbingo%3Fduplicate%3Dtrue%26visibility%3Dpublic)，配置可以不改。
 
 2. 部署署完成后，点击“设置” 》“站点域名”，点一下，复制一下 HF 域名信息，然后分享给别人即可。
 
 > Huggingface 不支持绑定自己的域名，不过我们可以使用曲线救国的方式来达到这个目的
-> 1. 方式一，借助 Github Pages 及 iframe [如何绑定域名](https://github.com/weaigc/bingo/issues/4)
-> 2. 方式二，Cloudflare Workers 
+> 1. 方式二，借助 Cloudflare Workers [部署Cloudflare Workers](#使用Cloudflare-Workers自定义域名)
+> 2. 方式一，借助 Github Pages 及 iframe [如何绑定域名](https://github.com/weaigc/bingo/issues/4)
+
+### 使用Cloudflare Workers自定义域名
+
+> 核心代码 [worker.js](./cloudflare/worker.js)
+
+- [注册 Cloudflare 账号](https://dash.cloudflare.com/sign-up)
+
+- 添加一个新的网站，需要你有自己的域名并且将域名`Name Server`托管给 Cloudflare 才行（更多信息可自行 Google)
+
+- 通过左侧菜单进入「Workers」，并点击「Create a Worker」。
+
+- 创建 Worker 服务，复制 [worker.js](./cloudflare/worker.js) 全部代码，粘贴至创建的服务中，根据注释进行改动，保存并部署。
+
+- 触发器 中自定义访问域名。
 
 ### 部署其它平台
 <details>
 <summary>
-由于其他平台目前遭到 new bing 封杀，会遇到更多问题，不再做推荐，有需要的可以自行查看
+由于其他平台目前遭到 New Bing 封杀，会遇到很多问题，不再做推荐，有需要的可以自行查看
 </summary>
 
 #### 部署到 Netlify
@@ -110,7 +124,7 @@ docker run --rm -it -e BING_HEADER=xxxx -p 7860:7860 bingo
 ```
 
 ## 如何获取 BING_HEADER
-打开 https://www.bing.com 并登录，然后访问 https://www.bing.com/turing/conversation/create
+打开 https://www.bing.com 并登录，然后访问 https://www.bing.com/turing/captcha/challenge，通过人机校验，然后
 
 ![BING HEADER](./docs/images/curl.png)
 
@@ -122,7 +136,7 @@ docker run --rm -it -e BING_HEADER=xxxx -p 7860:7860 bingo
 <summary>正常格式/网页端保存的格式(格式仅供参考)</summary>
 
 ```
-curl 'https://www.bing.com/turing/conversation/create' \
+curl 'https://www.bing.com/turing/captcha/challenge' \
   -H 'authority: www.bing.com' \
   -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7' \
   -H 'accept-language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6' \
@@ -168,7 +182,7 @@ Y3VybCAnaHR0cHM6Ly93d3cuYmluZy5jb20vdHVyaW5nL2NvbnZlcnNhdGlvbi9jcmVhdGUnIFwgICAt
 
 ## 答疑及交流
 
-<image src="./docs/images/wechat.jpg" width=240 />
+<image src="./docs/images/wechat.png" width=240 />
 
 ## License
 
