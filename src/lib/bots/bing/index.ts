@@ -71,10 +71,15 @@ export class BingWebBot {
           source: 'cib',
           optionsSets,
           allowedMessageTypes: [
+            'ActionRequest',
             'Chat',
+            'Context',
             'InternalSearchQuery',
+            'InternalSearchResult',
             'Disengaged',
             'InternalLoaderMessage',
+            'Progress',
+            'RenderCardRequest',
             'SemanticSerp',
             'GenerateContentQuery',
             'SearchQuery',
@@ -139,7 +144,7 @@ export class BingWebBot {
     }
 
     if (!resp?.result) {
-      throw new ChatError('Invalid response', ErrorCode.UNKOWN_ERROR)
+      throw new ChatError('你的 VPS 或代理可能被封禁，如有疑问，请前往 https://github.com/weaigc/bingo 咨询', ErrorCode.UNKOWN_ERROR)
     }
 
     const { value, message } = resp.result || {}
