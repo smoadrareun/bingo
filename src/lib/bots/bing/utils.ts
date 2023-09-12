@@ -1,9 +1,6 @@
-import { ChatResponseMessage, BingChatResponse } from './types'
+import { ChatResponseMessage } from './types'
 
 export function convertMessageToMarkdown(message: ChatResponseMessage): string {
-  if (message.messageType === 'InternalSearchQuery') {
-    return message.text
-  }
   for (const card of message.adaptiveCards??[]) {
     for (const block of card.body) {
       if (block.type === 'TextBlock') {
@@ -37,16 +34,20 @@ export const websocketUtils = {
 }
 
 export async function createImage(prompt: string, id: string, headers: HeadersInit): Promise<string | undefined> {
-  const { headers: responseHeaders } = await fetch(`https://www.bing.com/images/create?partner=sydney&re=1&showselective=1&sude=1&kseed=7000&SFX=&q=${encodeURIComponent(prompt)}&iframeid=${id}`,
+  const { headers: responseHeaders } = await fetch(`https://www.bing.com/images/create?partner=sydney&showselective=1&sude=1&kseed=8500&SFX=4&q=${encodeURIComponent(prompt)}&iframeid=${id}`,
     {
       method: 'HEAD',
-      headers,
+      headers: {
+        ...headers,
+        Referer: 'https://www.bing.com/search?q=Bing+AI&showconv=1',
+        'Sec-Fetch-Dest': 'iframe',
+      },
       redirect: 'manual'
     },
   );
 
   if (!/&id=([^&]+)$/.test(responseHeaders.get('location') || '')) {
-    throw new Error('请求异常，请检查身份信息是否有效')
+    throw new Error(`没有登录或登录已过期`)
   }
 
   const resultId = RegExp.$1;
@@ -69,7 +70,7 @@ export async function createImage(prompt: string, id: string, headers: HeadersIn
 
 
 export async function* streamAsyncIterable(stream: ReadableStream) {
-  const reader = stream.getReader()
+const reader = stream.getReader()
   try {
     while (true) {
       const { done, value } = await reader.read()
@@ -84,4 +85,3 @@ export async function* streamAsyncIterable(stream: ReadableStream) {
 }
 
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-

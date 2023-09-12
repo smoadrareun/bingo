@@ -11,6 +11,7 @@ export enum BingConversationStyle {
 export enum ErrorCode {
   CONVERSATION_LIMIT = 'CONVERSATION_LIMIT',
   BING_UNAUTHORIZED = 'BING_UNAUTHORIZED',
+  BING_IMAGE_UNAUTHORIZED = 'BING_IMAGE_UNAUTHORIZED',
   BING_IP_FORBIDDEN = 'BING_IP_FORBIDDEN',
   BING_TRY_LATER = 'BING_TRY_LATER',
   BING_FORBIDDEN = 'BING_FORBIDDEN',
@@ -33,6 +34,7 @@ export type ChatMessageModel = {
   id: string
   author: Author
   text: string
+  progress?: string[]
   error?: ChatError
   throttling?: Throttling
   sourceAttributions?: SourceAttribution[]
@@ -48,7 +50,7 @@ export type Event =
       type: 'UPDATE_ANSWER'
       data: {
         text: string
-        spokenText?: string
+        progressText?: string
         sourceAttributions?: SourceAttribution[]
         suggestedResponses?: SuggestedResponse[]
         throttling?: Throttling
@@ -70,10 +72,7 @@ export interface SendMessageParams<T> {
   signal?: AbortSignal
 }
 
-export interface ConversationResponse {
-  conversationId: string
-  clientId: string
-  conversationSignature: string
+export interface ConversationResponse extends ConversationInfoBase {
   result: {
     value: string
     message?: string
@@ -134,13 +133,15 @@ export enum InvocationEventType {
   Close = 7,
 }
 
-// https://github.com/bytemate/bingchat-api/blob/main/src/lib.ts
-
-export interface ConversationInfo {
+export interface ConversationInfoBase {
   conversationId: string
+  userIpAddress: string
   clientId: string
   conversationSignature: string
   invocationId: number
+}
+
+export interface ConversationInfo extends ConversationInfoBase {
   conversationStyle: BingConversationStyle
   prompt: string
   imageUrl?: string
@@ -150,7 +151,6 @@ export interface BingChatResponse {
   conversationSignature: string
   conversationId: string
   clientId: string
-  invocationId: number
   conversationExpiryTime: Date
   response: string
   details: ChatResponseMessage
@@ -165,7 +165,7 @@ export interface Throttling {
 
 export interface ChatResponseMessage {
   text: string
-  spokenText?: string
+  progressText?: string
   author: string
   createdAt: Date
   timestamp: Date

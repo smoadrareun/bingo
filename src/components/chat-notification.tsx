@@ -1,12 +1,10 @@
-import { useEffect } from 'react'
-import Image from 'next/image'
-
 import IconWarning from '@/assets/images/warning.svg'
 import { ChatError, ErrorCode, ChatMessageModel } from '@/lib/bots/bing/types'
 import { ExternalLink } from './external-link'
-import { useBing } from '@/lib/hooks/use-bing'
+import { BingReturnType } from '@/lib/hooks/use-bing'
+import { SVG } from './ui/svg'
 
-export interface ChatNotificationProps extends Pick<ReturnType<typeof useBing>, 'bot'> {
+export interface ChatNotificationProps extends Pick<BingReturnType, 'bot'> {
   message?: ChatMessageModel
 }
 
@@ -15,7 +13,7 @@ function getAction(error: ChatError, reset: () => void) {
     reset()
     return (
       <div>
-        你已达到每日最大发送消息次数，请<a href={`#dialog="settings"`}>更换账号</a>或隔一天后重试
+        请求次数过快，已被限流，请稍候重试...
       </div>
     )
   }
@@ -28,9 +26,9 @@ function getAction(error: ChatError, reset: () => void) {
   }
   if (error.code === ErrorCode.BING_TRY_LATER) {
     return (
-      <ExternalLink href="/">
-        创建会话失败，请稍候重试
-      </ExternalLink>
+      <a href={`#dialog="reset"`}>
+        创建会话失败，请手动重试
+      </a>
     )
   }
   if (error.code === ErrorCode.BING_FORBIDDEN) {
@@ -43,7 +41,7 @@ function getAction(error: ChatError, reset: () => void) {
   if (error.code === ErrorCode.CONVERSATION_LIMIT) {
     return (
       <div>
-        当前话题已中止，请点
+        当前话题已中止，请点击
         <a href={`#dialog="reset"`}>重新开始</a>
         开启新的对话
       </div>
@@ -59,17 +57,19 @@ function getAction(error: ChatError, reset: () => void) {
   if (error.code === ErrorCode.BING_UNAUTHORIZED) {
     reset()
     return (
-      <a href={`#dialog="settings"`}>没有获取到身份信息或身份信息失效，点此重新设置</a>
+      <a href={`#dialog="settings"`}>没有获取到用户信息或用户信息失效，点此重新设置</a>
+    )
+  }
+  if (error.code === ErrorCode.BING_IMAGE_UNAUTHORIZED) {
+    reset()
+    return (
+      <a href={`#dialog="settings"`}>画图需要用户信息，系统没有获取到有效的用户信息，点此设置</a>
     )
   }
   return error.message
 }
 
 export function ChatNotification({ message, bot }: ChatNotificationProps) {
-  useEffect(() => {
-    window.scrollBy(0, 2000)
-  }, [message])
-
   if (!message?.error) return
 
   return (
@@ -80,7 +80,7 @@ export function ChatNotification({ message, bot }: ChatNotificationProps) {
         <div className="inline-type with-decorative-line">
           <div className="text-container mt-1">
             <div className="title inline-flex items-start">
-              <Image alt="error" src={IconWarning} width={20} className="mr-1 mt-1" />
+              <SVG alt="error" src={IconWarning} width={20} className="mr-1 mt-1" />
               {getAction(message.error, () => bot.resetConversation())}
             </div>
           </div>

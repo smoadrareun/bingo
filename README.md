@@ -1,13 +1,3 @@
----
-title: bingo
-emoji: 📉
-colorFrom: red
-colorTo: red
-sdk: docker
-pinned: true
-license: mit
----
-
 <div align="center">
 
 # Bingo 
@@ -49,13 +39,16 @@ https://bing.github1s.tk
  - [x] 支持语音输出(需要手动开启)
  - [x] 支持图片输入
  - [x] 支持自定义域名
- - [ ] 支持历史记录
- - [ ] 适配深色模式
- - [ ] 支持内置提示词
- - [ ] 支持离线访问
+ - [x] 支持离线访问
+ - [x] 适配深色模式
+ - [x] 支持历史记录
+ - [x] 支持内置提示词
  - [ ] 国际化翻译
+ - [ ] 支持 OpenAI API
 
 ## 一键部署
+> HuggingFace 已经被封禁，新方法正在内测中，如有需要，请直接访问演示站点 https://bing.github1s.tk
+
 你也可以一键部署自己的 New Bing AI 到 🤗 HuggingFace 。
 
 ### 部署到 Huggingface
@@ -104,17 +97,19 @@ https://bing.github1s.tk
 ## 环境和依赖
 
 - Node.js >= 18
-- Bing AI 的[身份信息](#如何获取-BING_HEADER))
+- Bing AI 的[用户信息](#如何获取-BING_HEADER))
 
 ## 安装和使用
 
 > 由于目前微软封杀比较严重，推荐优先使用 [部署 Huggingface](#部署到-huggingface) 。
+> 本地部署需要你本机或服务器 IP 是国外 IP ，否则会无法连接到 New Bing。
 
 * 使用 Node 启动
 
 ```bash
 git clone https://github.com/weaigc/bingo.git
-npm i # 推荐使用 pnpm i
+npm i
+cd bingo
 npm run build
 npm run start
 ```
@@ -134,7 +129,7 @@ docker run --rm -it -e BING_HEADER=xxxx -p 7860:7860 weaigc/bingo
 
 ![BING HEADER](./docs/images/curl.png)
 
-> 复制出来的内容应该如下所示。确认格式无误后，打开 https://effulgent-bubblegum-e2f5df.netlify.app/#dialog=%22settings%22 ，粘贴进去，点击“转成 BING_HEADER 并复制”，然后从剪切板粘贴即可得到。（你也可以先在网页上进行验证）
+> 复制出来的内容应该如下所示。确认格式无误后，打开 https://hf4all-bingo.hf.space/#dialog=%22settings%22 ，粘贴进去，点击“转成 BING_HEADER 并复制”，然后从剪切板粘贴即可得到。（你也可以先在网页上进行验证）
 
 以下是格式参考，需要注意的是，网页端保存的格式是以`curl`开头, 而服务端配置的 `BING_HEADER` 是 `base64` 格式，两者不能互通。
 <details>
@@ -186,8 +181,22 @@ Y3VybCAnaHR0cHM6Ly93d3cuYmluZy5jb20vdHVyaW5nL2NvbnZlcnNhdGlvbi9jcmVhdGUnIFwgICAt
 
 
 ## 答疑及交流
+[Telegram 由此进](https://t.me/+NS5dCA4P-s9hYjNl)
 
-<image src="./docs/images/wechat.png" width=240 />
+<div align="left">
+  <image src="./docs/images/wechat.jpg" width=200 />
+  <image src="./docs/images/wechat2.jpg" width=200 />
+</div>
+
+## Star History
+
+<a href="https://star-history.com/#weaigc/bingo&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=weaigc/bingo&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=weaigc/bingo&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=weaigc/bingo&type=Date" />
+  </picture>
+</a>
 
 ## License
 

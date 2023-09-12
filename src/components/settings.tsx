@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAtom } from 'jotai'
 import { Switch } from '@headlessui/react'
 import { toast } from 'react-hot-toast'
-import { hashAtom, voiceAtom } from '@/state'
+import { hashAtom, historyAtom, isImageOnly, voiceAtom } from '@/state'
 import {
   Dialog,
   DialogContent,
@@ -17,12 +17,12 @@ import { ChunkKeys, parseCookies, extraCurlFromCookie, encodeHeadersToCookie, ge
 import { ExternalLink } from './external-link'
 import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 
-
 export function Settings() {
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 })
   const [loc, setLoc] = useAtom(hashAtom)
   const [curlValue, setCurlValue] = useState(extraCurlFromCookie(parseCookies(document.cookie, ChunkKeys)))
-  const [imageOnly, setImageOnly] = useState(getCookie('IMAGE_ONLY') !== '0')
+  const [imageOnly, setImageOnly] = useState(isImageOnly)
+  const [enabledHistory, setHistory] = useAtom(historyAtom)
   const [enableTTS, setEnableTTS] = useAtom(voiceAtom)
 
   useEffect(() => {
@@ -30,6 +30,27 @@ export function Settings() {
       toast.success('复制成功')
     }
   }, [isCopied])
+
+  const handleSwitchImageOnly = useCallback((checked: boolean) => {
+    let headerValue = curlValue
+    if (headerValue) {
+      try {
+        headerValue = atob(headerValue)
+      } catch (e) { }
+      if (!/^\s*curl ['"]https:\/\/(www|cn)\.bing\.com\/turing\/captcha\/challenge['"]/.test(headerValue)) {
+        toast.error('用户信息格式不正确')
+        return
+      }
+      if (RegExp.$1 === 'cn') {
+        toast.error('你配置的国内域名 cn.bing.com 仅支持画图')
+        setImageOnly(true)
+        return
+      }
+      setImageOnly(checked)
+    } else {
+      setImageOnly(checked)
+    }
+  }, [curlValue])
 
   if (loc === 'settings') {
     return (
@@ -40,13 +61,13 @@ export function Settings() {
             <DialogDescription>
               请使用 Edge 浏览器
               <ExternalLink
-                href="https://www.bing.com/turing/captcha/challenge"
+                href="https://www.bing.com"
               >
                 打开并登录 Bing
               </ExternalLink>
               ，然后再打开
               <ExternalLink href="https://www.bing.com/turing/captcha/challenge">Challenge 接口</ExternalLink>
-              右键 》检查。打开开发者工具，在网络里面找到 Create 接口 》右键复制》复制为 cURL(bash)，粘贴到此处，然后保存。
+              右键 》检查。打开开发者工具，在网络里面找到 Challenge 接口 》右键复制》复制为 cURL(bash)，粘贴到此处，然后保存。
               <div className="h-2" />
               图文示例：
               <ExternalLink href="https://github.com/weaigc/bingo#如何获取%20BING_HEADER">如何获取 BING_HEADER</ExternalLink>
@@ -58,19 +79,37 @@ export function Settings() {
           <Input
             value={curlValue}
             placeholder="在此填写用户信息，格式: curl 'https://www.bing.com/turing/captcha/challenge' ..."
-            onChange={e => setCurlValue(e.target.value)}
+            onChange={e => {
+              setCurlValue(e.target.value)
+              if (!/^\s*curl ['"]https:\/\/www\.bing\.com\/turing\/captcha\/challenge['"]/.test(e.target.value)) {
+                setImageOnly(true)
+              }
+            }}
           />
           <div className="flex gap-2">
-            身份信息仅用于画图（推荐）
             <Switch
               checked={imageOnly}
               className={`${imageOnly ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex h-6 w-11 items-center rounded-full`}
-              onChange={(checked: boolean) => setImageOnly(checked)}
+              onChange={(checked: boolean) => handleSwitchImageOnly(checked)}
             >
               <span
                 className={`${imageOnly ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition`}
               />
             </Switch>
+            尝试修复用户信息异常
+          </div>
+
+          <div className="flex gap-2">
+            <Switch
+              checked={enabledHistory}
+              className={`${enabledHistory ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex h-6 w-11 items-center rounded-full`}
+              onChange={(checked: boolean) => setHistory(checked)}
+            >
+              <span
+                className={`${enabledHistory ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition`}
+              />
+            </Switch>
+            启用历史记录
           </div>
 
           <Button variant="ghost" className="bg-[#F5F5F5] hover:bg-[#F2F2F2]" onClick={() => copyToClipboard(btoa(curlValue))}>
@@ -88,15 +127,14 @@ export function Settings() {
                     headerValue = atob(headerValue)
                   } catch (e) { }
                   if (!/^\s*curl ['"]https:\/\/(www|cn)\.bing\.com\/turing\/captcha\/challenge['"]/.test(headerValue)) {
-                    toast.error('格式不正确')
+                    toast.error('用户信息格式不正确')
                     return
                   }
-                  const maxAge = 86400 * 30
-                  encodeHeadersToCookie(headerValue).forEach(cookie => document.cookie = `${cookie}; Max-Age=${maxAge}; Path=/; SameSite=None; Secure`)
+                  encodeHeadersToCookie(headerValue).forEach(cookie => setCookie(cookie))
                 } else {
-                  [...ChunkKeys, 'BING_COOKIE', 'BING_UA', 'BING_IP'].forEach(key => setCookie(key, ''))
+                  [...ChunkKeys, 'BING_COOKIE', 'BING_UA', 'BING_IP', '_U'].forEach(key => setCookie(key, ''))
                 }
-                setCookie('IMAGE_ONLY', RegExp.$1 === 'cn' || imageOnly ? '1' : '0')
+                setCookie('IMAGE_ONLY', RegExp.$1 === 'cn' || imageOnly || !headerValue ? '1' : '0')
 
                 toast.success('保存成功')
                 setLoc('')

@@ -2,11 +2,8 @@
 
 import { NextApiRequest, NextApiResponse } from 'next'
 import { fetch, debug } from '@/lib/isomorphic'
-import { createHeaders, randomIP } from '@/lib/utils'
+import { createHeaders, randomIP, extraHeadersFromCookie } from '@/lib/utils'
 import { sleep } from '@/lib/bots/bing/utils'
-
-const API_ENDPOINT = 'https://www.bing.com/turing/conversation/create'
-// const API_ENDPOINT = 'https://edgeservices.bing.com/edgesvc/turing/conversation/create';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -14,16 +11,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const headers = createHeaders(req.cookies)
     do {
       headers['x-forwarded-for'] = headers['x-forwarded-for'] || randomIP()
-      debug(`try ${count+1}`, headers['x-forwarded-for'])
-      const response = await fetch(API_ENDPOINT, { method: 'GET', headers })
+      const endpoints = [...(process.env.ENDPOINT || '').split(',').filter(Boolean), 'www.bing.com']
+      const endpoint = endpoints[count % endpoints.length]
+      const { conversationId } = req.query
+      const query = conversationId ? new URLSearchParams({
+        conversationId: String(conversationId),
+      }) : ''
+      debug(`try ${count+1}`, endpoint, headers['x-forwarded-for'])
+      const response = await fetch(`https://${endpoint || 'www.bing.com'}/turing/conversation/create?${query}`, { method: 'GET', headers })
+        .catch(e => {
+          if (endpoint === 'www.bing.com') {
+            throw e
+          }
+          return e
+        })
+      debug('status', response.status, response.url, headers)
       if (response.status === 200) {
-        res.setHeader('set-cookie', [headers.cookie, `BING_IP=${headers['x-forwarded-for']}`]
-          .map(cookie => `${cookie}; Max-Age=${86400 * 30}; Path=/; SameSite=None; Secure`))
+        const json = await response.json().catch((e: any) => {})
+        console.log('json', json)
+        if (!json?.conversationSignature) {
+          continue
+        }
+        const cookies = [`BING_IP=${headers['x-forwarded-for']}`]
+
+        res.setHeader('set-cookie', cookies.map(cookie => `${cookie.trim()}; Max-Age=${86400 * 30}; Path=/;`))
         debug('headers', headers)
         res.writeHead(200, {
           'Content-Type': 'application/json',
         })
-        res.end(await response.text())
+        res.end(JSON.stringify({
+          ...json,
+          // userIpAddress: endpoint && !endpoint.endsWith('.bing.com') ? await lookupPromise(endpoint.split('/')[0]) : headers['x-forwarded-for']
+        }))
         return
       }
       await sleep(2000)
@@ -37,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }))
   } catch (e) {
     console.log('error', e)
-    return res.end(JSON.stringify({
+    res.end(JSON.stringify({
       result: {
         value: 'UnauthorizedRequest',
         message: `${e}`

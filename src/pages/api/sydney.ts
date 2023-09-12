@@ -4,15 +4,24 @@ import { BingWebBot } from '@/lib/bots/bing'
 import { websocketUtils } from '@/lib/bots/bing/utils'
 import { WatchDog, createHeaders } from '@/lib/utils'
 
+export const config = {
+  api: {
+    responseLimit: false,
+  },
+}
+
+const { WS_ENDPOINT = 'sydney.bing.com' } = process.env
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const conversationContext = req.body
   const headers = createHeaders(req.cookies)
   const id = headers['x-forwarded-for']
+  headers['x-forwarded-for'] = conversationContext?.userIpAddress || headers['x-forwarded-for']
 
-  debug(id, headers)
+  debug(id, conversationContext, headers)
   res.setHeader('Content-Type', 'text/stream; charset=UTF-8')
 
-  const ws = new WebSocket('wss://sydney.bing.com/sydney/ChatHub', {
+  const ws = new WebSocket(`wss://${WS_ENDPOINT}/sydney/ChatHub`, {
     headers: {
       ...headers,
       'accept-language': 'zh-CN,zh;q=0.9',
@@ -34,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ws.close()
     }, 20000)
     res.write(event.data)
-    if (/\{"type":([367])\}/.test(String(event.data))) {
+    if (/\{"type":([367])\b/.test(String(event.data))) {
       const type = parseInt(RegExp.$1, 10)
       debug(id, 'connection type', type)
       if (type === 3) {

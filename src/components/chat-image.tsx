@@ -6,39 +6,37 @@ import {
   ClipboardEvent,
   MouseEventHandler,
   useRef,
-  KeyboardEvent
+  KeyboardEvent,
+  FormEvent
 } from "react"
-import Image from 'next/image'
+import { toast } from "react-hot-toast"
+import { SVG } from "./ui/svg"
 import PasteIcon from '@/assets/images/paste.svg'
 import UploadIcon from '@/assets/images/upload.svg'
 import CameraIcon from '@/assets/images/camera.svg'
-import { useBing } from '@/lib/hooks/use-bing'
+import { BingReturnType } from '@/lib/hooks/use-bing'
 import { cn } from '@/lib/utils'
-import { toast } from "react-hot-toast"
+import { ImageUtils } from "@/lib/image"
 
-interface ChatImageProps extends Pick<ReturnType<typeof useBing>, 'uploadImage'> {}
+interface ChatImageProps extends Pick<BingReturnType, 'uploadImage'> {}
 
 const preventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
   event.nativeEvent.stopImmediatePropagation()
 }
 
-const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
-  const reader = new FileReader()
-  reader.readAsDataURL(file)
-  reader.onload = () => resolve(reader.result as string)
-  reader.onerror = reject
-})
-
 export function ChatImage({ children, uploadImage }: React.PropsWithChildren<ChatImageProps>) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const mediaStream = useRef<MediaStream>()
   const [panel, setPanel] = useState('none')
-  const [inputUrl, setInputUrl] = useState('')
 
   const upload = useCallback((url: string) => {
     if (url) {
       uploadImage(url)
+      if (fileRef.current) {
+        fileRef.current.value = ''
+      }
     }
     setPanel('none')
   }, [panel])
@@ -46,7 +44,7 @@ export function ChatImage({ children, uploadImage }: React.PropsWithChildren<Cha
   const onUpload = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      const fileDataUrl = await toBase64(file)
+      const fileDataUrl = await ImageUtils.getCompressedImageDataAsync(file)
       if (fileDataUrl) {
         upload(fileDataUrl)
       }
@@ -58,17 +56,19 @@ export function ChatImage({ children, uploadImage }: React.PropsWithChildren<Cha
     upload(pasteUrl)
   }, [])
 
-  const onEnter = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
-    // @ts-ignore
+  const onEnter = useCallback((event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    // @ts-ignore
     event.stopPropagation()
-    if (/^https?:\/\/.+/.test(inputUrl)) {
-      upload(inputUrl)
-    } else {
-      toast.error('请输入有效的图片链接')
+    // @ts-ignore
+    const inputUrl = event.target?.elements?.image?.value?.trim?.()
+    if (inputUrl) {
+      if (/^https?:\/\/.+/.test(inputUrl)) {
+        upload(inputUrl)
+      } else {
+        toast.error('请输入有效的图片链接')
+      }
     }
-  }, [inputUrl])
+  }, [])
 
   const openVideo: MouseEventHandler<HTMLButtonElement> = async (event) => {
     event.stopPropagation()
@@ -100,7 +100,7 @@ export function ChatImage({ children, uploadImage }: React.PropsWithChildren<Cha
 
   useEffect(() => {
     if (panel === 'camera-mode') {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
       .then(videoStream => {
         mediaStream.current = videoStream
         if (videoRef.current) {
@@ -126,38 +126,34 @@ export function ChatImage({ children, uploadImage }: React.PropsWithChildren<Cha
             <h4>添加图像</h4>
           </div>
           <div className="paste">
-            <Image alt="paste" src={PasteIcon} width={24} />
-            <input
-              className="paste-input"
-              id="sb_imgpst"
-              type="text"
-              name="image"
-              placeholder="粘贴图像 URL"
-              aria-label="粘贴图像 URL"
-              onPaste={onPaste}
-              onChange={(event) => setInputUrl(event.target.value.trim())}
-              onKeyDownCapture={event => {
-                if (event.key === 'Enter') {
-                  onEnter(event)
-                }
-              }}
-              onClickCapture={(e) => e.stopPropagation()}
-            />
+            <SVG alt="paste" src={PasteIcon} width={24} />
+            <form onSubmitCapture={onEnter}>
+              <input
+                className="paste-input"
+                id="sb_imgpst"
+                type="text"
+                name="image"
+                placeholder="粘贴图像 URL"
+                aria-label="粘贴图像 URL"
+                onPaste={onPaste}
+                onClickCapture={(e) => e.stopPropagation()}
+              />
+            </form>
           </div>
           <div className="buttons">
             <button type="button" aria-label="从此设备上传">
               <input
-                id="vs_fileinput"
+                ref={fileRef}
                 className="fileinput"
                 type="file"
                 accept="image/gif, image/jpeg, image/png, image/webp"
                 onChange={onUpload}
               />
-              <Image alt="uplaod" src={UploadIcon} width={20} />
+              <SVG alt="uplaod" src={UploadIcon} width={20} />
               从此设备上传
             </button>
             <button type="button" aria-label="拍照" onClick={openVideo}>
-              <Image alt="camera" src={CameraIcon} width={20} />
+              <SVG alt="camera" src={CameraIcon} width={20} />
               拍照
             </button>
           </div>
