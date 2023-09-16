@@ -14,10 +14,11 @@ Bingo，一个让你呼吸顺畅 New Bing。
 
 </div>
 
-## 演示站点
+## 演示站点（由于 New Bing 封锁，目前需要绑定用户信息才能使用，请参考说明自行配置）
 
-https://bing.github1s.tk
+站点1：https://bing.github1s.tk
 
+站点2：https://bingo.weaigc.repl.co
 
 
 [![img](./docs/images/demo.png)](https://bing.github1s.tk)
@@ -43,27 +44,17 @@ https://bing.github1s.tk
  - [x] 适配深色模式
  - [x] 支持历史记录
  - [x] 支持内置提示词
+ - [x] 支持 Workers 部署
  - [ ] 国际化翻译
  - [ ] 支持 OpenAI API
 
-## 一键部署
-> HuggingFace 已经被封禁，新方法正在内测中，如有需要，请直接访问演示站点 https://bing.github1s.tk
+## 在线部署
+### 1. 部署到 Replit（推荐）
 
-你也可以一键部署自己的 New Bing AI 到 🤗 HuggingFace 。
+[点击部署Replit](https://replit.com/@weaigc/bingo?v=1)
+并修改 `BING_COOKIE` 为自己的 COOKIE
 
-### 部署到 Huggingface
-1. 点击此图标
-[![Deploy to HuggingFace](https://img.shields.io/badge/%E7%82%B9%E5%87%BB%E9%83%A8%E7%BD%B2-%F0%9F%A4%97-fff)](https://huggingface.co/login?next=%2Fspaces%2Fhf4all%2Fbingo%3Fduplicate%3Dtrue%26visibility%3Dpublic)，配置可以不改。
-
-2. 部署署完成后，点击“设置” 》“站点域名”，点一下，复制一下 HF 域名信息，然后分享给别人即可。
-
-> Huggingface 不支持绑定自己的域名，不过我们可以使用曲线救国的方式来达到这个目的
-> 1. 方式二，借助 Cloudflare Workers [部署Cloudflare Workers](#使用Cloudflare-Workers自定义域名)
-> 2. 方式一，借助 Github Pages 及 iframe [如何绑定域名](https://github.com/weaigc/bingo/issues/4)
-
-### 使用Cloudflare Workers自定义域名
-
-> 核心代码 [worker.js](./cloudflare/worker.js)
+### 2. 部署到 CloudFlare (需要有自己的域名才可以)
 
 - [注册 Cloudflare 账号](https://dash.cloudflare.com/sign-up)
 
@@ -71,15 +62,33 @@ https://bing.github1s.tk
 
 - 通过左侧菜单进入「Workers」，并点击「Create a Worker」。
 
-- 创建 Worker 服务，复制 [worker.js](./cloudflare/worker.js) 全部代码，粘贴至创建的服务中，根据注释进行改动，保存并部署。
+- 创建 Worker 服务，复制 [worker.js](./cloudflare/worker.js) 全部代码，修改第一行 `SITE_HOST` 为自己的域名，修改 `BING_COOKIE` 为自己的COOKIE，粘贴至创建的服务中，根据注释进行改动，保存并部署。
 
 - 触发器 中自定义访问域名。
+
+### 如何获取 BING_COOKIE
+
+> 配置了 BING_COOKIE 意味着你将自己的账号共享给所有使用此服务的人，如果不需要免登录画图的功能，不建议设置此变量
+
+打开 https://www.bing.com 并登录，然后访问 https://www.bing.com/turing/captcha/challenge ，通过人机校验（如果显示**无效域**，意味着需要自行准备梯子），然后
+
+![BING_COOKIE](./docs/images/curl.png)
+
+> 复制出来的内容应该如下所示。确认格式无误后，打开 https://bing.github1s.tk/#dialog=%22settings%22 ，粘贴进去，点击“转成 BING_COOKIE 并复制”，然后从剪切板粘贴即可得到。（你也可以先在网页上进行验证）
+
 
 ### 部署其它平台
 <details>
 <summary>
-由于其他平台目前遭到 New Bing 封杀，会遇到很多问题，不再做推荐，有需要的可以自行查看
+由于其他平台目前遭到 New Bing 比较彻底的封杀，会遇到很多问题，不再做推荐，有需要的可以自行查看
 </summary>
+
+#### 部署到 HuggingFace
+1. 点击此图标
+[![Deploy to HuggingFace](https://img.shields.io/badge/%E7%82%B9%E5%87%BB%E9%83%A8%E7%BD%B2-%F0%9F%A4%97-fff)](https://huggingface.co/login?next=%2Fspaces%2Fhf4all%2Fbingo%3Fduplicate%3Dtrue%26visibility%3Dpublic)，配置可以不改。
+
+2. 部署署完成后，点击“设置” 》“站点域名”，点一下，复制一下 HF 域名信息，然后分享给别人即可。
+
 
 #### 部署到 Netlify
 [![Deploy to Netlify Button](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/weaigc/bingo)
@@ -101,7 +110,6 @@ https://bing.github1s.tk
 
 ## 安装和使用
 
-> 由于目前微软封杀比较严重，推荐优先使用 [部署 Huggingface](#部署到-huggingface) 。
 > 本地部署需要你本机或服务器 IP 是国外 IP ，否则会无法连接到 New Bing。
 
 * 使用 Node 启动
@@ -125,11 +133,11 @@ docker run --rm -it -e BING_HEADER=xxxx -p 7860:7860 weaigc/bingo
 ## 如何获取 BING_HEADER
 > 配置了 BING_HEADER 意味着你将自己的账号共享给所有使用此服务的人，如果不需要免登录画图的功能，不建议设置此变量
 
-打开 https://www.bing.com 并登录，然后访问 https://www.bing.com/turing/captcha/challenge ，通过人机校验，然后
+打开 https://www.bing.com 并登录，然后访问 https://www.bing.com/turing/captcha/challenge ，通过人机校验（如果显示**无效域**，则跳过校验不管），然后
 
 ![BING HEADER](./docs/images/curl.png)
 
-> 复制出来的内容应该如下所示。确认格式无误后，打开 https://hf4all-bingo.hf.space/#dialog=%22settings%22 ，粘贴进去，点击“转成 BING_HEADER 并复制”，然后从剪切板粘贴即可得到。（你也可以先在网页上进行验证）
+> 复制出来的内容应该如下所示。确认格式无误后，打开 https://bing.github1s.tk/#dialog=%22settings%22 ，粘贴进去，点击“转成 BING_HEADER 并复制”，然后从剪切板粘贴即可得到。（你也可以先在网页上进行验证）
 
 以下是格式参考，需要注意的是，网页端保存的格式是以`curl`开头, 而服务端配置的 `BING_HEADER` 是 `base64` 格式，两者不能互通。
 <details>
