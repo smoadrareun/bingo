@@ -12,12 +12,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ...req.cookies,
       BING_IP: randomIP()
     })
+    headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0"
     do {
       const endpoints = [req.headers['x-endpoint'], ...(process.env.ENDPOINT || '').split(','), 'www.bing.com'].filter(Boolean)
       const endpoint = endpoints[count % endpoints.length]
       const { conversationId } = req.query
       const query = new URLSearchParams({
-        bundleVersion: '1.1055.8',
+        bundleVersion: '1.1648.0',
       })
       if (conversationId) {
         query.set('conversationId', String(conversationId))
@@ -39,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         debug('json', json)
         json.encryptedconversationsignature = json.encryptedconversationsignature || response.headers.get('X-Sydney-encryptedconversationsignature') || undefined
 
-        if (!json?.clientId || (!json?.conversationSignature && !json.encryptedconversationsignature)) {
+        if (!json?.clientId || (!json?.conversationSignature && !json.encryptedconversationsignature) || (headers.cookie.includes('xxx') && !json.conversationId.includes('BingProdUnAuthenticatedUsers'))) {
           await sleep(2000)
           continue
         }

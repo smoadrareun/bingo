@@ -24,73 +24,49 @@ type Params = SendMessageParams<{ bingConversationStyle: BingConversationStyle, 
 const getOptionSets = (conversationStyle: BingConversationStyle, allowSeach = true) => {
   const results = {
     [BingConversationStyle.Creative]: [
-      'nlu_direct_response_filter',
       'deepleo',
       'disable_emoji_spoken_text',
-      'responsible_ai_policy_235',
-      'enablemm',
       'dv3sugg',
       'autosave',
       'iyxapbing',
       'iycapbing',
       'h3imaginative',
-      'gptvprvc',
-      'fluxpcalc',
-      'eredirecturl',
       'clgalileo',
       'gencontentv3',
-      'fluxv14l'
+      'nojbfedge',
     ],
     [BingConversationStyle.Balanced]: [
-      'nlu_direct_response_filter',
       'deepleo',
       'disable_emoji_spoken_text',
-      'responsible_ai_policy_235',
-      'enablemm',
       'dv3sugg',
       'autosave',
       'iyxapbing',
       'iycapbing',
       'galileo',
-      'gptvprvc',
-      'fluxpcalc',
-      'eredirecturl',
-      'saharagenconv5'
+      'saharagenconv5',
+      'nojbfedge',
     ],
     [BingConversationStyle.Precise]: [
-      'nlu_direct_response_filter',
       'deepleo',
       'disable_emoji_spoken_text',
-      'responsible_ai_policy_235',
-      'enablemm',
       'dv3sugg',
       'autosave',
       'iyxapbing',
       'iycapbing',
       'h3precise',
-      'gptvprvc',
-      'fluxpcalc',
-      'eredirecturl',
       'clgalileo',
       'gencontentv3',
-      'fluxv14l'
+      'nojbfedge',
     ],
     [BingConversationStyle.Base]: [
       'deepleo',
       'disable_emoji_spoken_text',
-      'responsible_ai_policy_235',
-      'enablemm',
       'dv3sugg',
       'autosave',
       'iyxapbing',
       'iycapbing',
-      'h3imaginative',
-      'gptvprvc',
-      'fluxpcalc',
-      'eredirecturl',
       'clgalileo',
       'gencontentv3',
-      'fluxv14l',
       'nojbfedge',
     ]
   }[conversationStyle]
@@ -126,20 +102,24 @@ export class BingWebBot {
     const message = {
       locale: 'zh-CN',
       market: 'zh-CN',
-      region: 'US',
+      region: 'CN',
       locationHints: [
         {
-          country: 'United States',
-          state: 'California',
-          city: 'Los Angeles',
-          timezoneoffset: 8,
-          countryConfidence: 8,
-          Center: {
-            Latitude: 34.0536909,
-            Longitude: -118.242766
+          "SourceType": 1,
+          "RegionType": 2,
+          "Center": {
+            "Latitude": 39.9042,
+            "Longitude": 116.4074,
           },
-          RegionType: 2,
-          SourceType: 1
+          "Radius": 24902,
+          "Name": "China",
+          "Accuracy": 24902,
+          "FDConfidence": 0,
+          "CountryName": "China",
+          "CountryConfidence": 9,
+          "PopulatedPlaceConfidence": 0,
+          "UtcOffset": 8,
+          "Dma": 0
         }
       ],
       author: 'user',
@@ -152,49 +132,29 @@ export class BingWebBot {
     }
 
     const argument = {
-      optionsSets: getOptionSets(useBaseSets ? BingConversationStyle.Base : conversation.conversationStyle, conversation.allowSearch),
-      sliceIds: [
-        'gbaa',
-        'gba',
-        'emovoice',
-        'tts3cf',
-        'kcinherocf',
-        'inochatv2',
-        'wrapnoins',
-        'mlchatpc9000ns',
-        'mlchatpcbase',
-        'sydconfigoptt',
-        '803iyjbexps0',
-        '0529streamws0',
-        '178gentechs0',
-        '0901utilbal',
-        'attr2atral3',
-        '821iypapyrust',
-        '019hlthgrd',
-        '829suggtrim',
-        '821fluxv13s0',
-        '727nrprdrt3'
-      ],
+      optionsSets: getOptionSets(conversation.conversationStyle, conversation.allowSearch),
+      sliceIds: [],
       message,
       source: 'cib',
       spokenTextMode: 'None',
       allowedMessageTypes: [
-        'ActionRequest',
-        'Chat',
-        'ConfirmationCard',
-        'Context',
-        'InternalSearchQuery',
-        'InternalSearchResult',
-        'Disengaged',
-        'InternalLoaderMessage',
-        'InvokeAction',
-        'Progress',
-        'RenderCardRequest',
-        'RenderContentRequest',
-        // 'AdsQuery',
-        'SemanticSerp',
-        'GenerateContentQuery',
-        'SearchQuery'
+        "ActionRequest",
+        "Chat",
+        "ConfirmationCard",
+        "Context",
+        "InternalSearchQuery",
+        "InternalSearchResult",
+        "Disengaged",
+        "InternalLoaderMessage",
+        "Progress",
+        "RenderCardRequest",
+        "RenderContentRequest",
+        "AdsQuery",
+        "SemanticSerp",
+        "GenerateContentQuery",
+        "SearchQuery",
+        "GeneratedCode",
+        "InternalTasksMessage"
       ],
       conversationHistoryOptionsSets: [
         'autosave',
@@ -202,18 +162,21 @@ export class BingWebBot {
         'uprofupd',
         'uprofgen'
       ],
+      gptId: "copilot",
       previousMessages: conversation.context?.length ? [{
-        author: 'user',
-        description: conversation.context,
+        author: 'system',
+        description: conversation.context.replace('[system](#message)','[system](#additional_instructions)'),
         contextType: 'WebPage',
         messageType: 'Context',
-        messageId: 'discover-web--page-ping-mriduna-----'
+        sourceName: '',
+        sourceUrl: '',
+        locale: '',
+        //messageId: 'discover-web--page-ping-mriduna-----'
       }] : undefined,
       traceId: md5(new Date().toString()),
       requestId: uuid,
       isStartOfSession: conversation.invocationId === 0,
       conversationId: conversation.conversationId,
-      conversationSignature: conversation.conversationSignature,
       participant: { id: conversation.clientId },
       plugins: [],
       scenario: 'SERP',
@@ -230,7 +193,7 @@ export class BingWebBot {
   async createConversation(conversationId?: string): Promise<ConversationResponse> {
     const headers = {
       'Accept-Encoding': 'gzip, deflate, br, zsdch',
-      'x-ms-useragent': 'azsdk-js-api-client-factory/1.0.0-beta.1 core-rest-pipeline/1.10.0 OS/Win32',
+      'x-ms-useragent': 'azsdk-js-api-client-factory/1.0.0-beta.1 core-rest-pipeline/1.12.3 OS/Android',
       cookie: this.cookie,
     }
 
@@ -371,10 +334,10 @@ export class BingWebBot {
         this.sydneyProxy(params, true)
       }
     }
-    let t = conversation.invocationId ? undefined : setTimeout(timeout, 6000)
+    let t = conversation.invocationId ? undefined : setTimeout(timeout, 10000)
     for await (const chunk of streamAsyncIterable(response.body!)) {
       clearTimeout(t)
-      t = setTimeout(timeout, 6000)
+      t = setTimeout(timeout, 10000)
       this.parseEvents(params, websocketUtils.unpackMessage(textDecoder(chunk)))
     }
     clearTimeout(t)
@@ -388,6 +351,7 @@ export class BingWebBot {
         headers: {
           'accept-language': 'zh-CN,zh;q=0.9',
           'cache-control': 'no-cache',
+          "user-agent": "Mozilla/5.0 (Linux; Android 7.1.1; OPPO R11t) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Mobile Safari/537.36 EdgA/108.0.1462.4",
           pragma: 'no-cache',
           cookie: this.cookie,
         }
@@ -407,7 +371,7 @@ export class BingWebBot {
   private async createImage(prompt: string, id: string) {
     const headers = {
       'Accept-Encoding': 'gzip, deflate, br, zsdch',
-      'x-ms-useragent': 'azsdk-js-api-client-factory/1.0.0-beta.1 core-rest-pipeline/1.10.0 OS/Win32',
+      'x-ms-useragent': 'azsdk-js-api-client-factory/1.0.0-beta.1 core-rest-pipeline/1.12.3 OS/Android',
       cookie: this.cookie,
     }
 
